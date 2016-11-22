@@ -284,37 +284,120 @@ def create(n):
 		print "ERROR a la hora de introducir el numero del parametro"
 
 
+# ***************************************************************************************
+# * FUNCION start() QUE INICIA LAS DIFERENTES MAQUINAS VIRTUALES (c1,lb,s1,s2,s3,s4,s5) *
+# ***************************************************************************************
 
 def start(n):
-#return
-	print "start"
-	os.system('sudo brctl addbr LAN1')
-	os.system('sudo brctl addbr LAN2')
-	os.system('sudo ifconfig LAN1 up ')
-	os.system('sudo ifconfig LAN2 up')
-	os.system('HOME=/mnt/tmp sudo virt-manager')
 
-	#Arrancamos las de por defecto
-	os.system('sudo virsh define c1.xml ')
-	os.system('sudo virsh start c1 ')
-	os.system('sudo virsh start c1 ')
+	if (n == 0):
+		print "start: maquinas por defecto"
 
-	os.system('sudo virsh define lb.xml ')
-	os.system('sudo virsh start lb ')
-	os.system('sudo virsh start lb ')
+		os.system('sudo brctl addbr LAN1')
+		os.system('sudo brctl addbr LAN2')
+		os.system('sudo ifconfig LAN1 up ')
+		os.system('sudo ifconfig LAN2 up')
+		os.system('HOME=/mnt/tmp sudo virt-manager')
 
-	#Las lanzamos en otra terminal
-	
-	os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10 -title 'c1' -e  'sudo virsh console c1' &")
-	
-	os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 'lb' -e  'sudo virsh console lb' &")
+		# Arrancamos las de por defecto
+		os.system('sudo virsh define c1.xml ')
+		os.system('sudo virsh start c1 ')
+		os.system('sudo virsh start c1 ')
 
-	#if(n ==1)
-	
+		os.system('sudo virsh define lb.xml ')
+		os.system('sudo virsh start lb ')
+		os.system('sudo virsh start lb ')
+
+		# Las lanzamos en otra terminal lb y c1 (las dos por defecto)
+		os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10 -title 'c1' -e  'sudo virsh console c1' &")
+		os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 'lb' -e  'sudo virsh console lb' &")
+
+	elif ((n >= 1) and (n <= 5)):	
+
+		os.system('sudo brctl addbr LAN1')
+		os.system('sudo brctl addbr LAN2')
+		os.system('sudo ifconfig LAN1 up ')
+		os.system('sudo ifconfig LAN2 up')
+		os.system('HOME=/mnt/tmp sudo virt-manager')
+
+		print "start: maquinas por defecto"
+		# Se vuelven a lanzar las dos MV por defecto: lb y c1
+		os.system('sudo virsh define c1.xml ')
+		os.system('sudo virsh start c1 ')
+		os.system('sudo virsh start c1 ')
+
+		os.system('sudo virsh define lb.xml ')
+		os.system('sudo virsh start lb ')
+		os.system('sudo virsh start lb ')
+
+		# Las lanzamos en otra terminal lb y c1 (las dos por defecto)
+		os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10 -title 'c1' -e  'sudo virsh console c1' &")
+		os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 'lb' -e  'sudo virsh console lb' &")
+
+		if (n >= 1):
+			print "start: maquina1 s1"
+			# Lanzamos s1
+			os.system('sudo virsh define s1.xml ')
+			os.system('sudo virsh start s1 ')
+			os.system('sudo virsh start s1 ')
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 's1' -e  'sudo virsh console s1' &")
+		if (n >= 2):
+			print "start: maquina1 s2"
+			# Lanzamos s2
+			os.system('sudo virsh define s2.xml ')
+			os.system('sudo virsh start s2 ')
+			os.system('sudo virsh start s2 ')
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 's2' -e  'sudo virsh console s2' &")		
+		if (n >= 3):
+			print "start: maquina1 s3"
+			# Lanzamos s3
+			os.system('sudo virsh define s3.xml ')
+			os.system('sudo virsh start s3 ')
+			os.system('sudo virsh start s3 ')
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 's3' -e  'sudo virsh console s3' &")
+		if (n >= 4):
+			print "start: maquina1 s4"
+			# Lanzamos s4
+			os.system('sudo virsh define s4.xml ')
+			os.system('sudo virsh start s4 ')
+			os.system('sudo virsh start s4 ')
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 's4' -e  'sudo virsh console s4' &")
+		if (n == 5):
+			print "start: maquina1 s5"
+			#Lanzamos s5
+			os.system('sudo virsh define s5.xml ')
+			os.system('sudo virsh start s5 ')
+			os.system('sudo virsh start s5 ')
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 's5' -e  'sudo virsh console s5' &")
+	else:
+		print "ERROR a la hora de introducir el numero del parametro"
+
+
+# **********************************************************************
+# ***** FUNCION stop() QUE APAGA LAS DIFERENTES MAQUINAS VIRTUALES *****
+# **********************************************************************
+
 def stop(n):
 
-	os.system('halt -p')
-	print "stop"
+	if(n==0):
+		os.system('sudo virsh shutdown c1')
+		os.system('sudo virsh shutdown lb')
+		print "Stopping c1 y lb..."
+	if(n ==1):
+		os.system('sudo virsh shutdown s1')
+		print "Stopping s1..."
+	if(n ==2):
+		os.system('sudo virsh shutdown s2')
+		print "Stopping s2..."
+	if(n ==3):
+		os.system('sudo virsh shutdown s3')
+		print "Stopping s3..."
+	if(n ==4):
+		os.system('sudo virsh shutdown s4')
+		print "Stopping s4..."
+	if(n ==5):
+		os.system('sudo virsh shutdown s5')
+		print "Stopping s5..."
 
 
 # *****************************************************************************
