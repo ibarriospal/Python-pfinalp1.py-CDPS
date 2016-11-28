@@ -8,11 +8,12 @@ import subprocess
 from lxml import etree
 from subprocess import Popen
 
-operaciones = [ "create", "start", "stop", "destroy", "-h" ]
-parametros = ["0","1","2","3","4","5"]
+operaciones = [ "create", "start", "stop", "destroy", "-h"]
+parametros = ["0","1","2","3","4","5","6","7","s1","s2","s3","s4","s5","s6","s7"]
 orden = ""
 parametro = ""
 parametro_num = 0;
+servName = ""
 ejecutar = False
 
 # ************************************************************************************************************************************************
@@ -115,7 +116,9 @@ def create(n):
 		# Creamos sub-instancias/sub-elementos de source_interface_2
 		sub_interface_2 = etree.SubElement(source_interface_2, "interface", type='bridge')
 		sub_source_2 = etree.SubElement(sub_interface_2, "source", bridge='LAN2')
-		sub_model = etree.SubElement(sub_source_2, "model", type='virtio')
+		#sub_model = etree.SubElement(sub_source_2, "model", type='virtio')
+		#este es el q funciona
+		sub_model = etree.SubElement(sub_interface_2, "model", type='virtio')
 
 		outFile = open('lb.xml', 'w')
 		doc.write(outFile)
@@ -284,6 +287,7 @@ def create(n):
 		print "ERROR a la hora de introducir el numero del parametro"
 
 
+
 # ***************************************************************************************
 # * FUNCION start() QUE INICIA LAS DIFERENTES MAQUINAS VIRTUALES (c1,lb,s1,s2,s3,s4,s5) *
 # ***************************************************************************************
@@ -398,6 +402,18 @@ def stop(n):
 	if(n ==5):
 		os.system('sudo virsh shutdown s5')
 		print "Stopping s5..."
+	if(n ==6):
+		os.system('sudo virsh destroy c1')
+		os.system('sudo virsh destroy lb')
+		
+		os.system('sudo virsh destroy s1')
+		
+		os.system('sudo virsh destroy s2')
+	
+		os.system('sudo virsh destroy s3')
+		os.system('sudo virsh destroy s4')
+		os.system('sudo virsh destroy s5')
+		print "All serves destroyed"	
 
 
 # *****************************************************************************
@@ -418,7 +434,7 @@ def destroy():
 	s4x = '/mnt/tmp/pfinalp1/s4.xml'
 	s4q= '/mnt/tmp/pfinalp1/s4.qcow2'
 	s5x = '/mnt/tmp/pfinalp1/s5.xml'
-	s5q= '/mnt/tmp/pfinalp1/s1.qcow2'
+	s5q= '/mnt/tmp/pfinalp1/s5.qcow2'
 
 	if os.path.exists(c1q):
 		os.system('rm c1.qcow2 -f')
@@ -441,9 +457,9 @@ def destroy():
 	if os.path.exists(s3x):
 		os.system('rm s3.xml -f')
 	if os.path.exists(s4q):
-		os.system('rm s4s5.qcow2 -f')
+		os.system('rm s4.qcow2 -f')
 	if os.path.exists(s4x):
-		os.system('rm s4s5.xml -f')
+		os.system('rm s4.xml -f')
 	if os.path.exists(s5q):
 		os.system('rm s5.qcow2 -f')
 	if os.path.exists(s5x):
@@ -464,7 +480,7 @@ def help():
 	print "------> 'start' : para arrancar las máquinas virtuales y mostrar su consola.\n"
 	print "------> 'stop' : para parar las máquinas virtuales.\n"
 	print "------> 'destroy' : para liberar el escenario, borrando todos los ficheros creados.\n"
-	print "\n <parametros> --> Los parametros pueden ser '1' '2' '3' '4' '5', dependiendo de los servidores que queremos arrancar\n"
+	print "\n <parametros> --> Los parametros pueden ser '1' '2' '3' '4' '5', dependiendo de los servidores que queremos arrancar \n"
 
 
 # *******************************
@@ -485,8 +501,14 @@ else:
 if len(sys.argv) == 3: # Si se define la orden y los parametros correctamente
 	orden = sys.argv[1]
 	parametro = sys.argv[2]
+	#servName = sys.argv[2]
 	if operaciones.count(orden):
 		print (parametro)
+	#	if parametros.count(servName):
+	#		ejecutar = True
+	#		servName = servName
+	#		print "Va bien"
+			#break
 		if parametros.count(parametro):
 			ejecutar = True
 			parametro_num = int(parametro)
