@@ -8,7 +8,7 @@ import subprocess
 from lxml import etree
 from subprocess import Popen
 
-operaciones = [ "create", "start", "stop", "destroy", "-h"]
+operaciones = [ "create", "start", "stop", "destroy", "-h","add","config" ]
 parametros = ["0","1","2","3","4","5","6","7","s1","s2","s3","s4","s5","s6","s7"]
 orden = ""
 parametro = ""
@@ -18,6 +18,7 @@ ejecutar = False
 
 # ************************************************************************************************************************************************
 # *****														DECLARACION DE LAS FUNCIONES 												     *****
+
 # ************************************************************************************************************************************************
 # ************************************************************************************************************************************************
 # ** FUNCION create(n) QUE CREA TANTAS MV COMO n PASADO; SINO SE PASA ANDA SE CREAN SIEMPRE POR DEFECTO c1 y lb, A PARTIR DE AHI s1,s2,s3,s4,s5 **
@@ -116,9 +117,7 @@ def create(n):
 		# Creamos sub-instancias/sub-elementos de source_interface_2
 		sub_interface_2 = etree.SubElement(source_interface_2, "interface", type='bridge')
 		sub_source_2 = etree.SubElement(sub_interface_2, "source", bridge='LAN2')
-		#sub_model = etree.SubElement(sub_source_2, "model", type='virtio')
-		#este es el q funciona
-		sub_model = etree.SubElement(sub_interface_2, "model", type='virtio')
+		sub_model = etree.SubElement(sub_source_2, "model", type='virtio')
 
 		outFile = open('lb.xml', 'w')
 		doc.write(outFile)
@@ -287,10 +286,130 @@ def create(n):
 		print "ERROR a la hora de introducir el numero del parametro"
 
 
+####################funcion anadir un servidor nuevo
+
+
+
+def add(nameServ):
+			print "creating: maquina " +str(nameServ)
+			os.system('qemu-img create -f qcow2 -b cdps-vm-base-p3.qcow2 s'+str(nameServ)+'.qcow2')
+			os.system('cp plantilla-vm-p3.xml s'+str(nameServ)+'.xml')
+
+			# Cargamos el fichero XML de lb y obtenemos el nodo raíz
+			tree = etree.parse('/mnt/tmp/pfinalp1/s'+str(nameServ)+'.xml')
+			root = tree.getroot()
+			# Guardamos en 'doc' el fichero XML que vas a toquetear
+			doc = etree.ElementTree(root)
+			# Buscamos y guardamos las etiquetas 'source' en el nodo /devices/disk y en el nodo /devices/interfaces 
+			source_disk = root.find("./devices/disk/source")
+			source_interface = root.find("./devices/interface/source")
+			name = root.find("name")
+			# Editamos name
+			name.text = "s"+str(nameServ)
+			# Editar ese valor de la etiqueta 
+			source_disk.set("file", '/mnt/tmp/pfinalp1/s'+str(nameServ)+'.qcow2')
+			# Editamos la bridge de LAN1
+			source_interface.set("bridge", 'LAN2')
+
+			outFile = open('s'+str(nameServ)+'.xml', 'w')
+			doc.write(outFile)
+
+			print "starting: maquina s"+str(nameServ)
+
+			maquina = "s"+str(nameServ)+".xml"
+			print maquina
+			maquina2 ="s"+str(nameServ)
+			start2(maquina,maquina2)
+
+#########################funcion lanzar el nuevo servidor añadido			
+
+def start2(maquina,maquina2):
+	
+			os.system('sudo brctl addbr LAN1')
+			os.system('sudo brctl addbr LAN2')
+			os.system('sudo ifconfig LAN1 up ')
+			os.system('sudo ifconfig LAN2 up')
+			os.system('HOME=/mnt/tmp sudo virt-manager')
+			os.system('sudo brctl addbr LAN1')
+			os.system('sudo brctl addbr LAN2')
+			os.system('sudo ifconfig LAN1 up ')
+			os.system('sudo ifconfig LAN2 up')
+			os.system('HOME=/mnt/tmp sudo virt-manager')
+			print "break1"
+			# Lanzamos s1
+			os.system('sudo virsh define ' +maquina+' ')
+			
+			print "break2"
+
+			os.system('sudo virsh start ' +maquina2)
+			os.system('sudo virsh start ' +maquina2)
+			print "break3"
+
+			
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title '"+maquina2+"' -e  'sudo virsh console "+maquina2+"' &")	
+
+
+
+
+#########################  funcion configurar servidor
+
+
+
+def config(nameServ):
+	#creamos el dir mnt dond mo9ntaremos las imagenres
+	os.system("mkdir mnt")
+	#montamos las imagenes
+
+	os.system('sudo vnx_mount_rootfs -s -r s'+str(nameServ)+'.qcow2 mnt')
+
+	os.system('sudo brctl addbr LAN1')
+	os.system('sudo brctl addbr LAN2')
+	os.system('sudo ifconfig LAN1 up ')
+	os.system('sudo ifconfig LAN2 up')
+	os.system('HOME=/mnt/tmp sudo virt-manager')
+
+
+
+	os.system('sudo virsh define s'+str(nameServ)+'.xml ')
+
+	maquina3 ="s"+str(nameServ)
+
+
+	#cambiamos el archivo hostname
+
+	outFile = open('/mnt/tmp/pfinalp1/mnt/etc/hostname', 'w')
+	outFile.write(maquina3)
+	outFile.close()
+
+	#cambiamos el archivo hosts
+	
+	outFile2 = open('/mnt/tmp/pfinalp1/mnt/etc/hosts', 'w')
+	outFile2.write("127.0.0.1       localhost")
+	outFile2.write("127.0.1.1       "+maquina3)
+	outFile2.write("The following lines are desirable for IPv6 capable hosts")
+	outFile2.write("::1     localhost ip6-localhost ip6-loopback")
+	outFile2.write("ff02::1 ip6-allnodes")
+	outFile2.write("ff02::2 ip6-allrouters")
+	outFile2.close()
+
+
+	#lanzamos el servidor ya configurado
+
+	os.system('sudo virsh start s'+str(nameServ))
+	os.system('sudo virsh start s'+str(nameServ))
+	
+	os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title '"+maquina3+"' -e  'sudo virsh console "+maquina3+"' &")
+
+	#Desmontamos la imagen
+	os.system("sudo vnx_mount_rootfs -u mnt")
+	
+
+
 
 # ***************************************************************************************
 # * FUNCION start() QUE INICIA LAS DIFERENTES MAQUINAS VIRTUALES (c1,lb,s1,s2,s3,s4,s5) *
 # ***************************************************************************************
+
 
 def start(n):
 
@@ -435,6 +554,7 @@ def destroy():
 	s4q= '/mnt/tmp/pfinalp1/s4.qcow2'
 	s5x = '/mnt/tmp/pfinalp1/s5.xml'
 	s5q= '/mnt/tmp/pfinalp1/s5.qcow2'
+	mnt= '/mnt/tmp/pfinalp1/mnt'
 
 	if os.path.exists(c1q):
 		os.system('rm c1.qcow2 -f')
@@ -464,6 +584,8 @@ def destroy():
 		os.system('rm s5.qcow2 -f')
 	if os.path.exists(s5x):
 		os.system('rm s5.xml -f')
+	if os.path.exists(mnt):
+		os.system('rm -rf mnt ')
 
 
 # ******************************************************************
@@ -531,6 +653,10 @@ if (ejecutar == True):
 		stop(parametro_num)
 	elif orden == "destroy":
 		destroy()
+	elif orden == "add":
+		add(parametro_num)
+	elif orden == "config":
+		config(parametro_num)		
 	elif orden == "-h":
 		help()
 	else:
