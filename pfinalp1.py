@@ -8,7 +8,7 @@ import subprocess
 from lxml import etree
 from subprocess import Popen
 
-operaciones = [ "create", "start", "stop", "destroy", "-h","add","config" ]
+operaciones = [ "create", "start", "stop", "destroy", "help","add","config" ]
 parametros = ["0","1","2","3","4","5","6","7","s1","s2","s3","s4","s5","s6","s7"]
 orden = ""
 parametro = ""
@@ -286,80 +286,80 @@ def create(n):
 		print "ERROR a la hora de introducir el numero del parametro"
 
 
-####################funcion anadir un servidor nuevo
-
-
+# ************************************************************************************************************************
+# ** FUNCION add(nameServ) QUE AÑADE UN NUEVO SERVIDOR (EL PASADO POR PARAMETRO), CREANDO EL SERVIDOR Y INICIALIZANDOLO **
+# ************************************************************************************************************************
 
 def add(nameServ):
-			print "creating: maquina " +str(nameServ)
-			os.system('qemu-img create -f qcow2 -b cdps-vm-base-p3.qcow2 s'+str(nameServ)+'.qcow2')
-			os.system('cp plantilla-vm-p3.xml s'+str(nameServ)+'.xml')
+	print "creating: maquina " +str(nameServ)
+	os.system('qemu-img create -f qcow2 -b cdps-vm-base-p3.qcow2 s'+str(nameServ)+'.qcow2')
+	os.system('cp plantilla-vm-p3.xml s'+str(nameServ)+'.xml')
 
-			# Cargamos el fichero XML de lb y obtenemos el nodo raíz
-			tree = etree.parse('/mnt/tmp/pfinalp1/s'+str(nameServ)+'.xml')
-			root = tree.getroot()
-			# Guardamos en 'doc' el fichero XML que vas a toquetear
-			doc = etree.ElementTree(root)
-			# Buscamos y guardamos las etiquetas 'source' en el nodo /devices/disk y en el nodo /devices/interfaces 
-			source_disk = root.find("./devices/disk/source")
-			source_interface = root.find("./devices/interface/source")
-			name = root.find("name")
-			# Editamos name
-			name.text = "s"+str(nameServ)
-			# Editar ese valor de la etiqueta 
-			source_disk.set("file", '/mnt/tmp/pfinalp1/s'+str(nameServ)+'.qcow2')
-			# Editamos la bridge de LAN1
-			source_interface.set("bridge", 'LAN2')
+	# Cargamos el fichero XML de lb y obtenemos el nodo raíz
+	tree = etree.parse('/mnt/tmp/pfinalp1/s'+str(nameServ)+'.xml')
+	root = tree.getroot()
+	# Guardamos en 'doc' el fichero XML que vas a toquetear
+	doc = etree.ElementTree(root)
+	# Buscamos y guardamos las etiquetas 'source' en el nodo /devices/disk y en el nodo /devices/interfaces 
+	source_disk = root.find("./devices/disk/source")
+	source_interface = root.find("./devices/interface/source")
+	name = root.find("name")
+	# Editamos name
+	name.text = "s"+str(nameServ)
+	# Editar ese valor de la etiqueta 
+	source_disk.set("file", '/mnt/tmp/pfinalp1/s'+str(nameServ)+'.qcow2')
+	# Editamos la bridge de LAN1
+	source_interface.set("bridge", 'LAN2')
 
-			outFile = open('s'+str(nameServ)+'.xml', 'w')
-			doc.write(outFile)
+	outFile = open('s'+str(nameServ)+'.xml', 'w')
+	doc.write(outFile)
 
-			print "starting: maquina s"+str(nameServ)
+	print "starting: maquina s"+str(nameServ)
 
-			maquina = "s"+str(nameServ)+".xml"
-			print maquina
-			maquina2 ="s"+str(nameServ)
-			start2(maquina,maquina2)
+	maquina = "s"+str(nameServ)+".xml"
+	print maquina
+	maquina2 ="s"+str(nameServ)
+	start2(maquina,maquina2)
 
-#########################funcion lanzar el nuevo servidor añadido			
+
+# **********************************************************************************
+# ** FUNCION start2(maquina,maquina2) QUE es llamada por la funcion add(servName) **
+# **********************************************************************************	
 
 def start2(maquina,maquina2):
 	
-			os.system('sudo brctl addbr LAN1')
-			os.system('sudo brctl addbr LAN2')
-			os.system('sudo ifconfig LAN1 up ')
-			os.system('sudo ifconfig LAN2 up')
-			os.system('HOME=/mnt/tmp sudo virt-manager')
-			os.system('sudo brctl addbr LAN1')
-			os.system('sudo brctl addbr LAN2')
-			os.system('sudo ifconfig LAN1 up ')
-			os.system('sudo ifconfig LAN2 up')
-			os.system('HOME=/mnt/tmp sudo virt-manager')
-			print "break1"
-			# Lanzamos s1
-			os.system('sudo virsh define ' +maquina+' ')
-			
-			print "break2"
+	os.system('sudo brctl addbr LAN1')
+	os.system('sudo brctl addbr LAN2')
+	os.system('sudo ifconfig LAN1 up ')
+	os.system('sudo ifconfig LAN2 up')
+	os.system('HOME=/mnt/tmp sudo virt-manager')
+	os.system('sudo brctl addbr LAN1')
+	os.system('sudo brctl addbr LAN2')
+	os.system('sudo ifconfig LAN1 up ')
+	os.system('sudo ifconfig LAN2 up')
+	os.system('HOME=/mnt/tmp sudo virt-manager')
+	print "Definiendo..."
+	# Lanzamos s1
+	os.system('sudo virsh define ' +maquina+' ')
+	
+	print "Arrancando..."
 
-			os.system('sudo virsh start ' +maquina2)
-			os.system('sudo virsh start ' +maquina2)
-			print "break3"
+	os.system('sudo virsh start ' +maquina2)
+	os.system('sudo virsh start ' +maquina2)
+	print "Lanzando..."
 
-			
-			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title '"+maquina2+"' -e  'sudo virsh console "+maquina2+"' &")	
-
+	os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title '"+maquina2+"' -e  'sudo virsh console "+maquina2+"' &")	
 
 
-
-#########################  funcion configurar servidor
-
-
+# **************************************************************************
+# ** FUNCION config(nameServ) QUE es llamada por la funcion add(servName) **
+# **************************************************************************
 
 def config(nameServ):
-	#creamos el dir mnt dond mo9ntaremos las imagenres
-	os.system("mkdir mnt")
-	#montamos las imagenes
 
+	# Creamos el dir mnt donde montaremos las imagenres
+	os.system("mkdir mnt")
+	# Montamos las imagenes
 	os.system('sudo vnx_mount_rootfs -s -r s'+str(nameServ)+'.qcow2 mnt')
 
 	os.system('sudo brctl addbr LAN1')
@@ -368,20 +368,17 @@ def config(nameServ):
 	os.system('sudo ifconfig LAN2 up')
 	os.system('HOME=/mnt/tmp sudo virt-manager')
 
-
-
 	os.system('sudo virsh define s'+str(nameServ)+'.xml ')
 
 	maquina3 ="s"+str(nameServ)
 
-
-	#cambiamos el archivo hostname
+	# Cambiamos el archivo hostname
 
 	outFile = open('/mnt/tmp/pfinalp1/mnt/etc/hostname', 'w')
 	outFile.write(maquina3)
 	outFile.close()
 
-	#cambiamos el archivo hosts
+	# Cambiamos el archivo hosts
 	
 	outFile2 = open('/mnt/tmp/pfinalp1/mnt/etc/hosts', 'w')
 	outFile2.write("127.0.0.1       localhost")
@@ -392,8 +389,7 @@ def config(nameServ):
 	outFile2.write("ff02::2 ip6-allrouters")
 	outFile2.close()
 
-
-	#lanzamos el servidor ya configurado
+	# Lanzamos el servidor ya configurado
 
 	os.system('sudo virsh start s'+str(nameServ))
 	os.system('sudo virsh start s'+str(nameServ))
@@ -404,12 +400,9 @@ def config(nameServ):
 	os.system("sudo vnx_mount_rootfs -u mnt")
 	
 
-
-
 # ***************************************************************************************
 # * FUNCION start() QUE INICIA LAS DIFERENTES MAQUINAS VIRTUALES (c1,lb,s1,s2,s3,s4,s5) *
 # ***************************************************************************************
-
 
 def start(n):
 
@@ -593,16 +586,18 @@ def destroy():
 # ******************************************************************
 
 def help():
-	print "**********************************************************************\n"
-	print "** Bienvenido a la ayuda del comando pfinalp1 de la asignatura CDPS **\n"
-	print "**********************************************************************\n"
+	print "\n**********************************************************************"
+	print "** Bienvenido a la ayuda del comando pfinalp1 de la asignatura CDPS **"
+	print "**********************************************************************"
 	print "\n El uso del comando es: python pfinalp1.py <orden> <parametros> o python pfinalp1.py <orden>\n"
-	print "\n <orden> --> La orden puede ser 'create' 'start' 'stop' 'destroy'\n"
-	print "------> 'create' : para crear los ficheros .qcow2 de diferencias y de especificación XML de cada MV, así como los bridges que soportan las LAN del escenario.\n"
-	print "------> 'start' : para arrancar las máquinas virtuales y mostrar su consola.\n"
-	print "------> 'stop' : para parar las máquinas virtuales.\n"
-	print "------> 'destroy' : para liberar el escenario, borrando todos los ficheros creados.\n"
-	print "\n <parametros> --> Los parametros pueden ser '1' '2' '3' '4' '5', dependiendo de los servidores que queremos arrancar \n"
+	print "\n <orden> --> La orden puede ser 'create' 'start' 'stop' 'add' 'destroy'"
+	print "         ------> 'create' : para crear los ficheros .qcow2 de diferencias y de especificación XML de cada MV, así como los bridges que soportan las LAN del escenario."
+	print "         ------> 'start' : para arrancar las máquinas virtuales y mostrar su consola."
+	print "         ------> 'add(nameServ)' : para añadir un nuevo servidor (el que pasemos por parametro de la funcion)."
+	print "         ------> 'config(nameServ)' : para configurar el nombre del host."
+	print "         ------> 'stop' : para parar las máquinas virtuales. Si ponemos 'stop 6', para todos"
+	print "         ------> 'destroy' : para liberar el escenario, borrando todos los ficheros creados."
+	print "\n <parametros> --> Los parametros pueden ser '1' '2' '3' '4' '5', dependiendo de los servidores que queremos arrancar; tambien puede ser 6 en el caso de stop"
 
 
 # *******************************
@@ -618,29 +613,21 @@ if len(sys.argv) == 2: #Si solo se define la orden sin introducir parametros
 	if operaciones.count(orden) == 1:
 		ejecutar = True
 		parametro_num = int(parametro)
-else:
-	print "Parametro incorrecto"
-if len(sys.argv) == 3: # Si se define la orden y los parametros correctamente
+
+elif len(sys.argv) == 3: # Si se define la orden y los parametros correctamente
 	orden = sys.argv[1]
 	parametro = sys.argv[2]
-	#servName = sys.argv[2]
 	if operaciones.count(orden):
 		print (parametro)
-	#	if parametros.count(servName):
-	#		ejecutar = True
-	#		servName = servName
-	#		print "Va bien"
-			#break
 		if parametros.count(parametro):
 			ejecutar = True
 			parametro_num = int(parametro)
-			print "Va bien"
 		else:
 			print "Parametro incorrecto"
 	else:
 		print "Orden no disponible"	
 else:
-	print "Para ejecutar el script debe definir una orden entre las posibles, para mas info opcion -h"
+	print "Para ejecutar el script debe definir una orden entre las posibles, para mas info opcion help"
 
 # Si el comando es correcto, comenzamos la ejecucion
 if (ejecutar == True):
@@ -657,7 +644,5 @@ if (ejecutar == True):
 		add(parametro_num)
 	elif orden == "config":
 		config(parametro_num)		
-	elif orden == "-h":
+	elif orden == "help":
 		help()
-	else:
-		print "fallo comando"
