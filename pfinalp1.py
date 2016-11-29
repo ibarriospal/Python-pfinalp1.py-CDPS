@@ -286,40 +286,41 @@ def create(n):
 		print "ERROR a la hora de introducir el numero del parametro"
 
 
+
 # ************************************************************************************************************************
 # ** FUNCION add(nameServ) QUE AÑADE UN NUEVO SERVIDOR (EL PASADO POR PARAMETRO), CREANDO EL SERVIDOR Y INICIALIZANDOLO **
 # ************************************************************************************************************************
 
 def add(nameServ):
-	print "creating: maquina " +str(nameServ)
-	os.system('qemu-img create -f qcow2 -b cdps-vm-base-p3.qcow2 s'+str(nameServ)+'.qcow2')
-	os.system('cp plantilla-vm-p3.xml s'+str(nameServ)+'.xml')
+			print "creating: maquina " +str(nameServ)
+			os.system('qemu-img create -f qcow2 -b cdps-vm-base-p3.qcow2 s'+str(nameServ)+'.qcow2')
+			os.system('cp plantilla-vm-p3.xml s'+str(nameServ)+'.xml')
 
-	# Cargamos el fichero XML de lb y obtenemos el nodo raíz
-	tree = etree.parse('/mnt/tmp/pfinalp1/s'+str(nameServ)+'.xml')
-	root = tree.getroot()
-	# Guardamos en 'doc' el fichero XML que vas a toquetear
-	doc = etree.ElementTree(root)
-	# Buscamos y guardamos las etiquetas 'source' en el nodo /devices/disk y en el nodo /devices/interfaces 
-	source_disk = root.find("./devices/disk/source")
-	source_interface = root.find("./devices/interface/source")
-	name = root.find("name")
-	# Editamos name
-	name.text = "s"+str(nameServ)
-	# Editar ese valor de la etiqueta 
-	source_disk.set("file", '/mnt/tmp/pfinalp1/s'+str(nameServ)+'.qcow2')
-	# Editamos la bridge de LAN1
-	source_interface.set("bridge", 'LAN2')
+			# Cargamos el fichero XML de lb y obtenemos el nodo raíz
+			tree = etree.parse('/mnt/tmp/pfinalp1/s'+str(nameServ)+'.xml')
+			root = tree.getroot()
+			# Guardamos en 'doc' el fichero XML que vas a toquetear
+			doc = etree.ElementTree(root)
+			# Buscamos y guardamos las etiquetas 'source' en el nodo /devices/disk y en el nodo /devices/interfaces 
+			source_disk = root.find("./devices/disk/source")
+			source_interface = root.find("./devices/interface/source")
+			name = root.find("name")
+			# Editamos name
+			name.text = "s"+str(nameServ)
+			# Editar ese valor de la etiqueta 
+			source_disk.set("file", '/mnt/tmp/pfinalp1/s'+str(nameServ)+'.qcow2')
+			# Editamos la bridge de LAN1
+			source_interface.set("bridge", 'LAN2')
 
-	outFile = open('s'+str(nameServ)+'.xml', 'w')
-	doc.write(outFile)
+			outFile = open('s'+str(nameServ)+'.xml', 'w')
+			doc.write(outFile)
+			outFile.close()
+			print "starting: maquina s"+str(nameServ)
 
-	print "starting: maquina s"+str(nameServ)
-
-	maquina = "s"+str(nameServ)+".xml"
-	print maquina
-	maquina2 ="s"+str(nameServ)
-	start2(maquina,maquina2)
+			maquina = "s"+str(nameServ)+".xml"
+			print maquina
+			maquina2 ="s"+str(nameServ)
+			start2(maquina,maquina2)
 
 
 # **********************************************************************************
@@ -328,77 +329,167 @@ def add(nameServ):
 
 def start2(maquina,maquina2):
 	
-	os.system('sudo brctl addbr LAN1')
-	os.system('sudo brctl addbr LAN2')
-	os.system('sudo ifconfig LAN1 up ')
-	os.system('sudo ifconfig LAN2 up')
-	os.system('HOME=/mnt/tmp sudo virt-manager')
-	os.system('sudo brctl addbr LAN1')
-	os.system('sudo brctl addbr LAN2')
-	os.system('sudo ifconfig LAN1 up ')
-	os.system('sudo ifconfig LAN2 up')
-	os.system('HOME=/mnt/tmp sudo virt-manager')
-	print "Definiendo..."
-	# Lanzamos s1
-	os.system('sudo virsh define ' +maquina+' ')
-	
-	print "Arrancando..."
+			os.system('sudo brctl addbr LAN1')
+			os.system('sudo brctl addbr LAN2')
+			os.system('sudo ifconfig LAN1 up ')
+			os.system('sudo ifconfig LAN2 up')
+			os.system('HOME=/mnt/tmp sudo virt-manager')
+			print "Definiendo..."
+			# Lanzamos s1
+			os.system('sudo virsh define ' +maquina+' ')
+			
+			print "Arrancando..."
 
-	os.system('sudo virsh start ' +maquina2)
-	os.system('sudo virsh start ' +maquina2)
-	print "Lanzando..."
+			os.system('sudo virsh start ' +maquina2)
+			os.system('sudo virsh start ' +maquina2)
+			print "Lanzando..."
 
-	os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title '"+maquina2+"' -e  'sudo virsh console "+maquina2+"' &")	
-
-
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title '"+maquina2+"' -e  'sudo virsh console "+maquina2+"' &")
 # **************************************************************************
-# ** FUNCION config(nameServ) QUE es llamada por la funcion add(servName) **
+# ** FUNCION config(nameServ)                                             **
 # **************************************************************************
 
 def config(nameServ):
 
-	# Creamos el dir mnt donde montaremos las imagenres
-	os.system("mkdir mnt")
-	# Montamos las imagenes
-	os.system('sudo vnx_mount_rootfs -s -r s'+str(nameServ)+'.qcow2 mnt')
+	if (nameServ == 0):
 
-	os.system('sudo brctl addbr LAN1')
-	os.system('sudo brctl addbr LAN2')
-	os.system('sudo ifconfig LAN1 up ')
-	os.system('sudo ifconfig LAN2 up')
-	os.system('HOME=/mnt/tmp sudo virt-manager')
+			print "Configurando lb y c1"
 
-	os.system('sudo virsh define s'+str(nameServ)+'.xml ')
 
-	maquina3 ="s"+str(nameServ)
+			# Creamos el dir mnt donde montaremos las imagenres
+			os.system("mkdir mnt")
+			# Montamos las imagenes para lb
+			os.system('sudo vnx_mount_rootfs -s -r lb.qcow2 mnt')
 
-	# Cambiamos el archivo hostname
+			os.system('sudo brctl addbr LAN1')
+			os.system('sudo brctl addbr LAN2')
+			os.system('sudo ifconfig LAN1 up ')
+			os.system('sudo ifconfig LAN2 up')
+			os.system('HOME=/mnt/tmp sudo virt-manager')
 
-	outFile = open('/mnt/tmp/pfinalp1/mnt/etc/hostname', 'w')
-	outFile.write(maquina3)
-	outFile.close()
+			os.system('sudo virsh define lb.xml ')
 
-	# Cambiamos el archivo hosts
-	
-	outFile2 = open('/mnt/tmp/pfinalp1/mnt/etc/hosts', 'w')
-	outFile2.write("127.0.0.1       localhost")
-	outFile2.write("127.0.1.1       "+maquina3)
-	outFile2.write("The following lines are desirable for IPv6 capable hosts")
-	outFile2.write("::1     localhost ip6-localhost ip6-loopback")
-	outFile2.write("ff02::1 ip6-allnodes")
-	outFile2.write("ff02::2 ip6-allrouters")
-	outFile2.close()
+			# Cambiamos el archivo hostname
 
-	# Lanzamos el servidor ya configurado
+			outFile = open('/mnt/tmp/pfinalp1/mnt/etc/hostname', 'w')
+			outFile.write("lb")
+			outFile.close()
 
-	os.system('sudo virsh start s'+str(nameServ))
-	os.system('sudo virsh start s'+str(nameServ))
-	
-	os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title '"+maquina3+"' -e  'sudo virsh console "+maquina3+"' &")
+			# Cambiamos el archivo hosts
+			
+			outFile2 = open('/mnt/tmp/pfinalp1/mnt/etc/hosts', 'w')
+			outFile2.write("127.0.0.1       localhost")
+			outFile2.write("127.0.1.1       lb")
+			outFile2.write("The following lines are desirable for IPv6 capable hosts")
+			outFile2.write("::1     localhost ip6-localhost ip6-loopback")
+			outFile2.write("ff02::1 ip6-allnodes")
+			outFile2.write("ff02::2 ip6-allrouters")
+			outFile2.close()
 
-	#Desmontamos la imagen
-	os.system("sudo vnx_mount_rootfs -u mnt")
-	
+			# Lanzamos el servidor ya configurado
+
+			os.system('sudo virsh start lb')
+			os.system('sudo virsh start lb')
+			
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 'lb' -e  'sudo virsh console lb' &")
+
+			#Desmontamos la imagen
+			os.system("sudo vnx_mount_rootfs -u mnt")
+
+
+
+			# Creamos el dir mnt donde montaremos las imagenres
+			os.system("mkdir mnt")
+			# Montamos las imagenes para c1
+			os.system('sudo vnx_mount_rootfs -s -r c1.qcow2 mnt')
+
+			os.system('sudo brctl addbr LAN1')
+			os.system('sudo brctl addbr LAN2')
+			os.system('sudo ifconfig LAN1 up ')
+			os.system('sudo ifconfig LAN2 up')
+			os.system('HOME=/mnt/tmp sudo virt-manager')
+
+			os.system('sudo virsh define c1.xml ')
+
+			
+
+			# Cambiamos el archivo hostname
+
+			outFile = open('/mnt/tmp/pfinalp1/mnt/etc/hostname', 'w')
+			outFile.write("c1")
+			outFile.close()
+
+			# Cambiamos el archivo hosts
+			
+			outFile2 = open('/mnt/tmp/pfinalp1/mnt/etc/hosts', 'w')
+			outFile2.write("127.0.0.1       localhost")
+			outFile2.write("127.0.1.1       c1")
+			outFile2.write("The following lines are desirable for IPv6 capable hosts")
+			outFile2.write("::1     localhost ip6-localhost ip6-loopback")
+			outFile2.write("ff02::1 ip6-allnodes")
+			outFile2.write("ff02::2 ip6-allrouters")
+			outFile2.close()
+
+			# Lanzamos el servidor ya configurado
+
+			os.system('sudo virsh start c1')
+			os.system('sudo virsh start c1')
+			
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title 'c1' -e  'sudo virsh console c1' &")
+
+			#Desmontamos la imagen
+			os.system("sudo vnx_mount_rootfs -u mnt")
+
+
+	elif((nameServ >= 1) and (nameServ <= 5)):
+
+			print "Configurando s"+str(nameServ)
+
+			# Creamos el dir mnt donde montaremos las imagenres
+			os.system("mkdir mnt")
+			# Montamos las imagenes
+			os.system('sudo vnx_mount_rootfs -s -r s'+str(nameServ)+'.qcow2 mnt')
+
+			os.system('sudo brctl addbr LAN1')
+			os.system('sudo brctl addbr LAN2')
+			os.system('sudo ifconfig LAN1 up ')
+			os.system('sudo ifconfig LAN2 up')
+			os.system('HOME=/mnt/tmp sudo virt-manager')
+
+			os.system('sudo virsh define s'+str(nameServ)+'.xml ')
+
+			maquina3 ="s"+str(nameServ)
+
+			# Cambiamos el archivo hostname
+
+			outFile = open('/mnt/tmp/pfinalp1/mnt/etc/hostname', 'w')
+			outFile.write(maquina3)
+			outFile.close()
+
+			# Cambiamos el archivo hosts
+			
+			outFile2 = open('/mnt/tmp/pfinalp1/mnt/etc/hosts', 'w')
+			outFile2.write("127.0.0.1       localhost")
+			outFile2.write("127.0.1.1       "+maquina3)
+			outFile2.write("The following lines are desirable for IPv6 capable hosts")
+			outFile2.write("::1     localhost ip6-localhost ip6-loopback")
+			outFile2.write("ff02::1 ip6-allnodes")
+			outFile2.write("ff02::2 ip6-allrouters")
+			outFile2.close()
+
+			# Lanzamos el servidor ya configurado
+
+			os.system('sudo virsh start s'+str(nameServ))
+			os.system('sudo virsh start s'+str(nameServ))
+			
+			os.system("xterm -rv -sb -rightbar -fa  monospace -fs  10  -title '"+maquina3+"' -e  'sudo virsh console "+maquina3+"' &")
+
+			#Desmontamos la imagen
+			os.system("sudo vnx_mount_rootfs -u mnt")
+
+	else:
+		print "Parametro incorrecto"		
+			
 
 # ***************************************************************************************
 # * FUNCION start() QUE INICIA LAS DIFERENTES MAQUINAS VIRTUALES (c1,lb,s1,s2,s3,s4,s5) *
@@ -597,7 +688,7 @@ def help():
 	print "         ------> 'config(nameServ)' : para configurar el nombre del host."
 	print "         ------> 'stop' : para parar las máquinas virtuales. Si ponemos 'stop 6', para todos"
 	print "         ------> 'destroy' : para liberar el escenario, borrando todos los ficheros creados."
-	print "\n <parametros> --> Los parametros pueden ser '1' '2' '3' '4' '5', dependiendo de los servidores que queremos arrancar; tambien puede ser 6 en el caso de stop"
+	print "\n <parametros> --> Los parametros pueden ser '1' '2' '3' '4' '5', dependiendo de los servidores que queremos arrancar."
 
 
 # *******************************
